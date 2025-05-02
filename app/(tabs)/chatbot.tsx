@@ -20,42 +20,53 @@ const ChatbotScreen = () => {
   const [userInput, setUserInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const LLM_API_URL = 'https://4c23-140-213-166-26.ngrok-free.app/api/llm';
+  const LLM_API_URL = 'http://192.168.4.232:5000/api/llm';
 
   const handleUserInput = async () => {
     if (!userInput.trim()) return;
+  
+    const jsonInput = { input_text: userInput }; // Kirim input dengan key 'input_text'
+  
     setChatHistory((prev) => [...prev, { role: 'user', message: userInput }]);
     setUserInput('');
     setIsLoading(true);
-
+  
     try {
       const resp = await fetch(LLM_API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ input_text: userInput }),
+        body: JSON.stringify(jsonInput), // Kirimkan data dengan key 'input_text'
       });
+  
       if (resp.ok) {
         const data = await resp.json();
+  
+        // Pastikan data yang diterima memiliki key 'answer'
         const botReply = data.answer ?? 'Tidak ada jawaban dari server.';
         setChatHistory((prev) => [
           ...prev,
           { role: 'assistant', message: botReply },
         ]);
       } else {
+        // Menangani error dari server jika status tidak 2xx
+        const errorMessage = await resp.text();
         setChatHistory((prev) => [
           ...prev,
-          { role: 'assistant', message: `Error: ${resp.status}` },
+          { role: 'assistant', message: `Error: ${resp.status} - ${errorMessage}` },
         ]);
       }
     } catch (e) {
+      // Menangani error jaringan atau kesalahan lainnya
       setChatHistory((prev) => [
         ...prev,
-        { role: 'assistant', message: 'Gagal menghubungi server.' },
+        { role: 'assistant', message: `Gagal menghubungi server. Error: ` },
       ]);
     } finally {
       setIsLoading(false);
     }
   };
+  
+  
 
   return (
     <SafeAreaView style={styles.container}>
