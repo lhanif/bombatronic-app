@@ -64,7 +64,7 @@ export default function HomeScreen() {
     const longPoll = async () => {
       while (isActive) {
         try {
-          const res = await fetch(`http://${process.env.API_LINK}:5000/api/fetch_db`, {
+          const res = await fetch(`http://192.168.194.226:5000/api/fetch_db`, {
             method: "GET",
             headers: {
               "Content-Type": "application/json"

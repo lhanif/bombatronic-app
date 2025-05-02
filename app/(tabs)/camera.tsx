@@ -1,51 +1,71 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ActivityIndicator, Button } from 'react-native';
-import Video from 'react-native-video'; // Library untuk video streaming
+import React, { useEffect, useState } from 'react';
+import { View, Text, Image, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-type StreamingCameraProps = {
-  streamUrl: string;
-};
-
-const StreamingCamera: React.FC<StreamingCameraProps> = ({ streamUrl }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(false);
-
-  const handleError = () => {
-    setError(true);
-    setIsLoading(false);
-  };
+const StreamingCamera = () => {
+  const [currentImage, setCurrentImage] = useState('');
+  const [nextImage, setNextImage] = useState('');
+  const [showCurrent, setShowCurrent] = useState(true);
 
   useEffect(() => {
-    setIsLoading(true);
-    setError(false);
-  }, [streamUrl]);
+    const interval = setInterval(() => {
+      const newUrl = `http://192.168.194.180/cam-lo.jpg?timestamp=${new Date().getTime()}`;
+      
+      // Preload image silently
+      Image.prefetch(newUrl).then(() => {
+        setNextImage(newUrl);
+        setShowCurrent(prev => !prev); // swap image after preload done
+        setCurrentImage(newUrl); // update current
+      }).catch(() => {
+        // Optional: handle error
+      });
+
+    }, 100); // 10 fps
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <View className="items-center pt-5">
-        <Text className="text-2xl font-semibold">Camera</Text>
-      </View>
-
-      <View className="flex-1 justify-center items-center mt-10">
-        {isLoading && <ActivityIndicator size="large" color="#0000ff" />}
-        {error ? (
-          <View className="flex items-center">
-            <Text className="text-red-500">Error loading stream</Text>
-            <Button title="Reload" onPress={() => setIsLoading(true)} />
-          </View>
-        ) : (
-          <Video
-            source={{ uri: streamUrl }}
-            onError={handleError}
-            onLoad={() => setIsLoading(false)}
-            style={{ width: 320, height: 240 }} // Sesuaikan ukuran video
-            resizeMode="contain" // Agar video pas di dalam frame
-          />
-        )}
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.title}>Camera Stream</Text>
+      <View style={styles.imageWrapper}>
+        <Image
+          source={{ uri: showCurrent ? currentImage : nextImage }}
+          style={styles.image}
+          resizeMode="cover"
+        />
       </View>
     </SafeAreaView>
   );
 };
 
 export default StreamingCamera;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#AFDDFF',
+    alignItems: 'center',
+    paddingTop: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '600',
+    marginBottom: 20,
+  },
+  imageWrapper: {
+    marginTop: 200,
+    width: 320*1.2,
+    height: 240*1.2,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 5,
+    padding:5,
+    borderColor: '#60B5FF',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 7,
+  },
+});
