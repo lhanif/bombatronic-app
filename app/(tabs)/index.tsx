@@ -1,7 +1,7 @@
 import { ScrollView, View, Text, Dimensions, SafeAreaView } from 'react-native';
-import { LineChart } from 'react-native-chart-kit';
 import { HelloWave } from '@/components/HelloWave';
 import { useEffect, useState } from 'react';
+import { LineChart } from 'react-native-gifted-charts';
 
 interface SensorDataTypes {
   Timestamps: string[];
@@ -18,38 +18,58 @@ interface ChartCardTypes {
   timestamps: string[];
 }
 
-const chartConfig = {
-  backgroundGradientFrom: "#FFFFFF",
-  backgroundGradientTo: "#FFFFFF",
-  decimalPlaces: 0,
-  color: () => "#60B5FF",
-  labelColor: () => "#bebebe",
-};
-
 const ChartCard = ({ title, units, data, timestamps }: ChartCardTypes) => {
-  const latestValue = data && data.length > 0 ? data[data.length - 1].toFixed(1) : "--";
+  const isValid =
+    Array.isArray(data) &&
+    Array.isArray(timestamps) &&
+    data.length > 0 &&
+    timestamps.length > 0;
+
+  const latestValue = isValid ? data[data.length - 1].toFixed(1) : "--";
+  const minValue = isValid ? Math.min(...data) : 0;
+  const maxValue = isValid ? Math.max(...data) : 0;
+
+  const chartData = isValid
+    ? data.map((value, index) => ({
+        value,
+        label: timestamps[index] || '',
+      }))
+    : [];
 
   return (
     <View className="bg-white rounded-2xl w-[45%] p-3 shadow-sm">
       <Text className="text-center text-sm text-gray-800 mb-2">
         {title} {"\n"}
-        <Text className="text-gray-600 font-bold text-2xl">{latestValue + " " + units}</Text>
+        <Text className="text-gray-600 font-bold text-2xl">
+          {latestValue + " " + units}
+        </Text>
       </Text>
-      {data && (
+
+      {isValid ? (
         <LineChart
-          data={{
-            labels: timestamps,
-            datasets: [{ data }],
-          }}
-          width={Dimensions.get("window").width / 3}
+          data={chartData}
+          yAxisOffset={minValue}
           height={100}
-          chartConfig={chartConfig}
-          bezier
-          style={{ borderRadius: 12, paddingRight: 30 }}
-          withInnerLines={false}
-          withDots={false}
-          withShadow={false}
-        />
+          isAnimated
+          hideDataPoints
+          hideRules
+          color="#60B5FF"
+          thickness={2}
+          noOfSections={4}
+          spacing={15}
+          yAxisThickness={0}
+          xAxisThickness={0}
+          xAxisLabelsHeight={0}
+          yAxisTextStyle={{ 
+            fontSize: 10,
+            color: "gray"
+          }}
+          curved
+          />
+      ) : (
+        <Text className="text-center text-gray-400 text-xs">
+          Chart unavailable
+        </Text>
       )}
     </View>
   );
@@ -60,40 +80,45 @@ export default function HomeScreen() {
 
   useEffect(() => {
     let isActive = true;
-  
+
     const longPoll = async () => {
       while (isActive) {
         try {
-          const res = await fetch(`http://192.168.194.226:5000/api/fetch_db`, {
+          const res = await fetch(`http://192.168.143.226:5000/api/fetch_db`, {
             method: "GET",
             headers: {
               "Content-Type": "application/json"
             },
           });
-  
+
           if (!res.ok) throw new Error("Fetch error");
-  
+
           const data: SensorDataTypes = await res.json();
+          console.log("Fetched data:", JSON.stringify(data));
+
           setSensorData(data);
-  
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 10000));
         } catch (err) {
           console.error("Polling error:", err);
           await new Promise(resolve => setTimeout(resolve, 3000));
         }
       }
     };
-  
+
     longPoll();
-  
+
     return () => {
       isActive = false;
     };
   }, []);
 
-    return (
+  return (
     <SafeAreaView className="bg-[#FFECDB] h-full">
-      <ScrollView style={{ backgroundColor: "#AFDDFF" }} contentContainerStyle={{ paddingVertical: 50}} className="py-10">
+      <ScrollView
+        style={{ backgroundColor: "#AFDDFF" }}
+        contentContainerStyle={{ paddingVertical: 50 }}
+        className="py-10"
+      >
         {/* Greeting Section */}
         <View className="bg-white border-[#FFECDB] rounded-xl border-8 justify-center items-center shadow-lg mb-10 p-4 mx-10">
           <Text className="text-4xl font-bold text-black text-center">
@@ -109,15 +134,16 @@ export default function HomeScreen() {
           <Text className="text-xl text-white mb-6">
             Recent sensor readings
           </Text>
-          
-          {/* Chart Grid */}
+
           <View className="flex-row flex-wrap justify-between gap-y-4">
             <View className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full 
-            bg-white z-10 border-8 border-[#60B5FF] flex justify-center items-center">
-              <Text className='text-2xl'>📱</Text>
+              bg-white z-10 border-8 border-[#60B5FF] flex justify-center items-center">
+              <Text className="text-2xl">📱</Text>
             </View>
-            
-            {sensorData && (
+
+            {!sensorData ? (
+              <Text className="text-white text-center">Loading sensor data...</Text>
+            ) : (
               <>
                 <ChartCard
                   title="Carbon Monoxide"
@@ -145,8 +171,6 @@ export default function HomeScreen() {
                 />
               </>
             )}
-
-
           </View>
         </View>
       </ScrollView>

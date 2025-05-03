@@ -9,7 +9,7 @@ const StreamingCamera = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const newUrl = `http://192.168.194.180/cam-lo.jpg?timestamp=${new Date().getTime()}`;
+      const newUrl = `http://192.168.143.180/cam-lo.jpg?timestamp=${new Date().getTime()}`;
       
       // Preload image silently
       Image.prefetch(newUrl).then(() => {

@@ -20,7 +20,7 @@ const ChatbotScreen = () => {
   const [userInput, setUserInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const LLM_API_URL = 'http://192.168.194.226:5000/api/llm';
+  const LLM_API_URL = 'http://192.168.143.226:5000/api/llm';
 
   const handleUserInput = async () => {
     if (!userInput.trim()) return;
