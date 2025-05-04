@@ -2,6 +2,7 @@ import { ScrollView, View, Text, Dimensions, SafeAreaView } from 'react-native';
 import { HelloWave } from '@/components/HelloWave';
 import { useEffect, useState } from 'react';
 import { LineChart } from 'react-native-gifted-charts';
+import { useIpContext } from '../IpContext';
 
 interface SensorDataTypes {
   Timestamps: string[];
@@ -27,7 +28,7 @@ const ChartCard = ({ title, units, data, timestamps }: ChartCardTypes) => {
 
   const latestValue = isValid ? data[data.length - 1].toFixed(1) : "--";
   const minValue = isValid ? Math.min(...data) : 0;
-  const maxValue = isValid ? Math.max(...data) : 0;
+  const maxValue = isValid ? Math.max(...data) : 0;   
 
   const chartData = isValid
     ? data.map((value, index) => ({
@@ -77,14 +78,14 @@ const ChartCard = ({ title, units, data, timestamps }: ChartCardTypes) => {
 
 export default function HomeScreen() {
   const [sensorData, setSensorData] = useState<SensorDataTypes>();
-
+  const { ipData } = useIpContext();
   useEffect(() => {
     let isActive = true;
 
     const longPoll = async () => {
       while (isActive) {
         try {
-          const res = await fetch(`http://192.168.143.226:5000/api/fetch_db`, {
+          const res = await fetch(`http://${ipData}:5000/api/fetch_db`, {
             method: "GET",
             headers: {
               "Content-Type": "application/json"

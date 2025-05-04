@@ -1,29 +1,31 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useIpContext } from '../IpContext';
 
 const StreamingCamera = () => {
+  const { ipCamera } = useIpContext();
   const [currentImage, setCurrentImage] = useState('');
   const [nextImage, setNextImage] = useState('');
   const [showCurrent, setShowCurrent] = useState(true);
 
   useEffect(() => {
+    if (!ipCamera) return;
+
     const interval = setInterval(() => {
-      const newUrl = `http://192.168.143.180/cam-lo.jpg?timestamp=${new Date().getTime()}`;
+      const newUrl = `http://${ipCamera}/cam-lo.jpg?timestamp=${new Date().getTime()}`;
       
-      // Preload image silently
       Image.prefetch(newUrl).then(() => {
         setNextImage(newUrl);
-        setShowCurrent(prev => !prev); // swap image after preload done
-        setCurrentImage(newUrl); // update current
+        setShowCurrent(prev => !prev); 
+        setCurrentImage(newUrl); 
       }).catch(() => {
-        // Optional: handle error
       });
 
-    }, 100); // 10 fps
+    }, 100); 
 
     return () => clearInterval(interval);
-  }, []);
+  }, [ipCamera]);
 
   return (
     <SafeAreaView style={styles.container}>

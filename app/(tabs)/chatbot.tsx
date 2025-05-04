@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useIpContext } from '../IpContext';
 type ChatMessage = {
   role: 'user' | 'assistant';
   message: string;
@@ -19,8 +20,9 @@ const ChatbotScreen = () => {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [userInput, setUserInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const {ipData} = useIpContext();
 
-  const LLM_API_URL = 'http://192.168.143.226:5000/api/llm';
+  const LLM_API_URL = `http://${ipData}:5000/api/llm`;
 
   const handleUserInput = async () => {
     if (!userInput.trim()) return;
