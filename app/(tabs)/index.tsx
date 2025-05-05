@@ -78,25 +78,31 @@ const ChartCard = ({ title, units, data, timestamps }: ChartCardTypes) => {
 
 export default function HomeScreen() {
   const [sensorData, setSensorData] = useState<SensorDataTypes>();
+  const [currentIP, setCurrentIP] = useState<string>();
   const { ipData } = useIpContext();
-  useEffect(() => {
-    let isActive = true;
 
+  useEffect(() => {
+    if (!ipData) return;
+    setCurrentIP(ipData);
+  }, [ipData]);
+  
+  useEffect(() => {
+    if (!currentIP) return;
+    let isActive = true;
+  
     const longPoll = async () => {
       while (isActive) {
         try {
-          const res = await fetch(`http://${ipData}:5000/api/fetch_db`, {
+          const res = await fetch(`http://${currentIP}:5000/api/fetch_db`, {
             method: "GET",
-            headers: {
-              "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
           });
-
+  
           if (!res.ok) throw new Error("Fetch error");
-
+  
           const data: SensorDataTypes = await res.json();
           console.log("Fetched data:", JSON.stringify(data));
-
+  
           setSensorData(data);
           await new Promise(resolve => setTimeout(resolve, 10000));
         } catch (err) {
@@ -105,14 +111,14 @@ export default function HomeScreen() {
         }
       }
     };
-
+  
     longPoll();
-
+  
     return () => {
       isActive = false;
     };
-  }, []);
-
+  }, [currentIP]);
+  
   return (
     <SafeAreaView className="bg-[#FFECDB] h-full">
       <ScrollView
